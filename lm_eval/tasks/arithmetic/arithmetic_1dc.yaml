@@ -8,6 +8,7 @@ validation_split: validation
 test_split: null
 doc_to_text: "{{context}}"
 doc_to_target: "{{completion}}"
+target_delimiter: ""
 metric_list:
   - metric: acc
     aggregation: mean

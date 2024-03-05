@@ -2,3 +2,16 @@
 dataset_name: international_phonetic_alphabet_transliterate_zero_shot
 include: ../generate_until_template_yaml
 task: bigbench_international_phonetic_alphabet_transliterate_generate_until
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_punctuation: true
+  - metric: bleu
+filter_list:
+  - name: "remove_spaces"
+    filter:
+      # - function: "remove_whitespace"
+      - function: "regex"
+        regex_pattern: "^\\s*([\\S\\s]*?)\\s*$"
+      - function: "take_first"

@@ -2,3 +2,10 @@
 dataset_name: word_unscrambling_zero_shot
 include: ../generate_until_template_yaml
 task: bigbench_word_unscrambling_generate_until
+filter_list:
+  - name: "remove_spaces"
+    filter:
+      # - function: "remove_whitespace"
+      - function: "regex"
+        regex_pattern: "^\\s*([\\S\\s]*?)\\s*$"
+      - function: "take_first"
