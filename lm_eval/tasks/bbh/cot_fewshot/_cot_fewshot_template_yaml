@@ -23,8 +23,10 @@ generation_kwargs:
     - "</s>"
     - "Q:"
     - "<|im_end|>"
+    - "<|endoftext|>"
   do_sample: false
   temperature: 0.0
+  min_new_tokens: 5
 num_fewshot: 0
 metadata:
   version: 3.0

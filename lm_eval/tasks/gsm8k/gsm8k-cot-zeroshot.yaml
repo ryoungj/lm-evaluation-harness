@@ -25,6 +25,7 @@ generation_kwargs:
     - "Q:"
     - "</s>"
     - "<|im_end|>"
+    - "<|endoftext|>"
   do_sample: false
 repeats: 1
 num_fewshot: 0

@@ -59,6 +59,7 @@ class VLLM(TemplateLM):
         gpu_memory_utilization: float = 0.9,
         device: str = "cuda",
         data_parallel_size: int = 1,
+        download_dir: Optional[str] = None,
     ):
         super().__init__()
 
@@ -90,6 +91,7 @@ class VLLM(TemplateLM):
             "swap_space": int(swap_space),
             "quantization": quantization,
             "seed": int(seed),
+            "download_dir": download_dir,
         }
         self.batch_size = (
             "auto"
@@ -116,6 +118,11 @@ class VLLM(TemplateLM):
         )
 
         self._max_gen_toks = max_gen_toks
+
+        if "google/gemma" in pretrained:
+            self._add_special_tokens = True
+        else:
+            self._add_special_tokens = False
 
     @property
     def eot_token_id(self):
@@ -151,6 +158,11 @@ class VLLM(TemplateLM):
         truncation=False,
     ):
         """ """
+        if "google/gemma" in self.model_args["model"] and not add_special_tokens:
+            eval_logger.warning(
+                    "Gemma model should not use add_special_tokens=False. Overriding to True.", 
+            )
+            add_special_tokens = True
         encoding = self.tokenizer.encode(
             string, add_special_tokens=add_special_tokens, truncation=truncation
         )
@@ -202,7 +214,7 @@ class VLLM(TemplateLM):
                 map(
                     make_disjoint_window,
                     get_rolling_token_windows(
-                        token_list=self.tok_encode(string),
+                        token_list=self.tok_encode(string, self._add_special_tokens),
                         prefix_token=self.eot_token_id,
                         max_seq_len=self.max_length - 1,
                         context_len=1,
@@ -228,7 +240,7 @@ class VLLM(TemplateLM):
 
         # batch tokenize contexts
         context, all_gen_kwargs = zip(*(req.args for req in requests))
-        context_encoding = self.tokenizer(context, add_special_tokens=False).input_ids
+        context_encoding = self.tokenizer(context, add_special_tokens=self._add_special_tokens).input_ids
         requests = [
             ((a, b), c) for a, b, c in zip(context, context_encoding, all_gen_kwargs)
         ]
@@ -412,4 +424,5 @@ class VLLM(TemplateLM):
         kwargs["spaces_between_special_tokens"] = kwargs.get(
             "spaces_between_special_tokens", False
         )
+        kwargs["min_tokens"] = kwargs.pop("min_new_tokens", 1)
         return kwargs

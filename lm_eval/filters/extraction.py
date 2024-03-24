@@ -33,12 +33,19 @@ class RegexFilter(Filter):
                 if match:
                     match = match[self.group_select]
                     if isinstance(match, tuple):
-                        match = [m for m in match if m][0]
-                    match = match.strip()
+                        # Filter out empty strings and check if the resulting list is not empty
+                        filtered_match = [m for m in match if m]
+                        if filtered_match:
+                            match = filtered_match[0]
+                        else:
+                            # Handle the case where the list is empty
+                            match = None  # Or your preferred fallback value
+                    match = match.strip() if match else self.fallback
                 else:
                     match = self.fallback
                 filtered.append(match)
             return filtered
+
 
         # print(resps)
         filtered_resps = list(map(lambda x: filter_set(x), resps))

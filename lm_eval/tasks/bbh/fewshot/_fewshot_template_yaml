@@ -20,6 +20,7 @@ generation_kwargs:
     - "</s>"
     - "Q:"
     - "<|im_end|>"
+    - "<|endoftext|>"
   do_sample: false
   temperature: 0.0
 num_fewshot: 0

@@ -655,11 +655,18 @@ class HFLM(TemplateLM):
         self, string: str, left_truncate_len=None, add_special_tokens=None
     ) -> List[int]:
         """ """
-        if add_special_tokens is None:
-            if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
-                add_special_tokens = False
-            elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
-                add_special_tokens = True
+        if self.config.model_type == "gemma":
+            if add_special_tokens == False:
+                eval_logger.warning(
+                    "Gemma model should not use add_special_tokens=False. Overriding to True."
+                )
+            add_special_tokens = True
+        else:
+            if add_special_tokens is None:
+                if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
+                    add_special_tokens = False
+                elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
+                    add_special_tokens = True
 
         encoding = self.tokenizer.encode(string, add_special_tokens=add_special_tokens)
 
@@ -680,10 +687,13 @@ class HFLM(TemplateLM):
         old_padding_side = self.tokenizer.padding_side
         self.tokenizer.padding_side = padding_side
 
-        if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
-            add_special_tokens = False
-        elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
+        if self.config.model_type == "gemma":
             add_special_tokens = True
+        else:
+            if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
+                add_special_tokens = False
+            elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
+                add_special_tokens = True
 
         encoding = self.tokenizer(
             strings,
@@ -751,12 +761,27 @@ class HFLM(TemplateLM):
         stopping_criteria = stop_sequences_criteria(
             self.tokenizer, stop, context.shape[1], context.shape[0]
         )
+
+        # if "min_new_tokens" in generation_kwargs:
+        #     from transformers import GenerationConfig, MinLengthLogitsProcessor
+
+        #     min_new_tokens = generation_kwargs.pop("min_new_tokens")
+        #     min_length = context.shape[1] + min_new_tokens
+
+        #     MinLengthLogitsProcessor(min_length=min_length, eos_token_id=[self.tokenizer.eos_token_id])
+
+
+        #     gen_config.min_new_tokens = min_new_tokens
+        # else:
+        #     gen_config = None
+
         return self.model.generate(
             input_ids=context,
             max_length=max_length,
             stopping_criteria=stopping_criteria,
             pad_token_id=self.tokenizer.pad_token_id,
             use_cache=True,
+            # generation_config=gen_config,
             **generation_kwargs,
         )
 
@@ -1159,6 +1184,8 @@ class HFLM(TemplateLM):
 
             if "max_length" not in kwargs:
                 kwargs["max_length"] = context_enc.shape[1] + max_gen_toks
+
+            kwargs["max_new_tokens"] = None
 
             # perform batched generation
             cont = self._model_generate(
