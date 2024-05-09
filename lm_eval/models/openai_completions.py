@@ -442,6 +442,9 @@ class OpenaiChatCompletionsLM(LM):
                         f"Expected repr(kwargs) to be of type repr(dict) but got {kwargs}"
                     )
 
+                kwargs = self.modify_gen_kwargs(kwargs)
+
+
                 response = oa_completion(
                     client=self.client,
                     chat=True,
@@ -476,3 +479,8 @@ class OpenaiChatCompletionsLM(LM):
 
     def loglikelihood_rolling(self, requests):
         raise NotImplementedError("No support for logits.")
+    
+    @staticmethod
+    def modify_gen_kwargs(kwargs: dict) -> dict:
+        kwargs.pop("min_new_tokens", None)
+        return kwargs

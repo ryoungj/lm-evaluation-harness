@@ -1,8 +1,8 @@
-include: gsm8k-cot.yaml
+include: gsm8k-cot-instruct.yaml
 group:
   - chain_of_thought
   - self_consistency
-task: gsm8k_cot_self_consistency
+task: gsm8k_cot_self_consistency_instruct
 generation_kwargs:
   until:
     - "Q:"
